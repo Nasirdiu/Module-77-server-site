@@ -4,7 +4,7 @@ require("dotenv").config();
 const cors = require("cors");
 const port = process.env.PORT || 5000;
 const jwt = require("jsonwebtoken");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 //middle Ware
 app.use(cors());
 app.use(express.json());
@@ -151,6 +151,14 @@ async function run() {
       }
     });
 
+    //payment booking system
+    app.get("/booking/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const booking = await bookingCollection.findOne(query);
+      res.send(booking);
+    });
+
     app.post("/booking", async (req, res) => {
       const booking = req.body;
       const query = {
@@ -167,10 +175,10 @@ async function run() {
     });
 
     //doctor add
-    app.get('/doctor',verifyJWT, verifyAdmin,async(req,res)=>{
-        const doctors=await doctorCollection.find().toArray();
-        res.send(doctors);
-    })
+    app.get("/doctor", verifyJWT, verifyAdmin, async (req, res) => {
+      const doctors = await doctorCollection.find().toArray();
+      res.send(doctors);
+    });
 
     app.post("/doctor", verifyJWT, verifyAdmin, async (req, res) => {
       const doctor = req.body;
@@ -179,7 +187,7 @@ async function run() {
     });
     app.delete("/doctor/:email", verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
-      const filter={email:email};
+      const filter = { email: email };
       const result = await doctorCollection.deleteOne(filter);
       res.send(result);
     });
