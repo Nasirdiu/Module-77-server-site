@@ -46,6 +46,9 @@ async function run() {
       .collection("bookings");
     const userCollection = client.db("doctors_portal").collection("users");
     const doctorCollection = client.db("doctors_portal").collection("doctor");
+    const paymentCollection = client
+      .db("doctors_portal")
+      .collection("payments");
 
     //verifyAdmin
     const verifyAdmin = async (req, res, next) => {
@@ -68,7 +71,7 @@ async function run() {
     });
     //payment system
 
-    app.post("/create-payment-intent",verifyJWT, async (req, res) => {
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const service = req.body;
       const price = service.price;
       const amount = price * 100;
@@ -168,8 +171,6 @@ async function run() {
       }
     });
 
-    
-
     //payment booking system
     app.get("/booking/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
@@ -192,8 +193,28 @@ async function run() {
       const result = await bookingCollection.insertOne(booking);
       return res.send({ success: true, result });
     });
+    //card
+    app.patch("/booking/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+      const result = await paymentCollection.insertOne(payment);
+      const updateBooking = await bookingCollection.updateOne(
+        filter,
+        updateDoc
+      );
+
+      res.send(updateDoc);
+    });
 
     //doctor add
+
     app.get("/doctor", verifyJWT, verifyAdmin, async (req, res) => {
       const doctors = await doctorCollection.find().toArray();
       res.send(doctors);
